@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Unbounded:wght@900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Righteous&family=Unbounded:wght@900&display=swap" rel="stylesheet">
+    
+    <title>ANGRY METER</title>
+    <style>
+        body {
+            text-align: center;
+            margin-top: 130px;
+            padding: 0;
+            overflow: hidden; /* スクロールを無効にする */
+            height: 100vh; /* 画面の高さいっぱいに設定 */
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.00) 20.23%, #ffe91f4d 60.08%), #ED6C24;
+            font-family: Mochiy Pop One;
+
+    
+        }
+
+        #audio-monitor {
+            margin-top: 20px;
+            font-size: 100px;
+            display: none;
+            font-family: 'Righteous', cursive;
+            font-family: 'Unbounded', sans-serif;
+            background: linear-gradient(180deg,  #000000,#be0600); /* グラデーションの設定 */
+            -webkit-background-clip: text; /* テキストの中にグラデーションを適用 */
+            background-clip: text;
+            -webkit-text-fill-color: transparent; /* テキストを透明にする */
+            
+        }
+        ul{
+            list-style-type: none;
+            padding: 0;
+             margin: 0;
+             display: flex; /* 親要素をフレックスコンテナにする */
+             justify-content: center; /* 水平方向に中央揃えにする */
+        }
+        li{
+            list-style-type: none;
+            font-family: A-OTF KamoLime Std;
+            font-style: normal;
+            font-weight: 900;
+            font-size: 20px;
+            margin: 0px;
+            padding: 0px;
+            position: absolute;
+            bottom: 500px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: inline-block; 
+
+
+        }
+
+        #monitor-Value{
+            display: none;
+            position: absolute;
+            bottom: 470px;
+
+        }
+
+
+        #image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+        }
+
+         #image1, #image2 {
+            display: none;
+            max-width: 100%;
+            height: auto;
+        }
+
+        #image3{
+            max-width: 100%;
+            height: auto;
+        }
+
+        button {
+            width: 150px;
+            height: 50px;
+            font-size: 18px;
+            margin: 10px;
+            border-radius: 10px;
+        }
+
+        #button{
+            margin-top: 100px;
+        }
+
+        #start-recording {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #stop-recording, #reset-value {
+            background-color: #f44336;
+            color: white;
+        }
+
+        #how-to-play{
+            margin-top: 50px;
+    
+
+        }
+    </style>
+</head>
+<body>
+    <div id="image-container">
+        <img id="image3" src="image/title.png" alt="Image 3">
+        <img id="image1" src="unun_03.gif" alt="Image 1">
+        <img id="image2" src="don_01.gif" alt="Image 2">
+    </div>
+    
+    <ul>
+        <li><div id="audio-monitor">0</div></li>
+        <li id="monitor-Value">プンプン</li>
+    </ul>
+    
+    <div id="button">
+        <button id="start-recording">録音開始</button>
+        <button id="stop-recording" disabled>録音停止</button>
+        <button id="reset-value">リセット</button>
+    </div>
+
+    <div id="how-to-play">
+        <img src="image/board.png" width="754" height="136" alt="">
+    </div>
+
+    <script>
+        let audioContext;
+        let audioStream;
+        let audioMeter;
+        let isRecording = false;
+        let recordedValue = 0;
+
+        const startRecordingButton = document.getElementById('start-recording');
+        const stopRecordingButton = document.getElementById('stop-recording');
+        const resetValueButton = document.getElementById('reset-value');
+        const audioMonitor = document.getElementById('audio-monitor');
+        const monitorValue = document.getElementById('monitor-Value')
+        const image1 = document.getElementById('image1');
+        const image2 = document.getElementById('image2');
+        const image3 = document.getElementById('image3');
+
+        startRecordingButton.addEventListener('click', startRecording);
+        stopRecordingButton.addEventListener('click', stopRecording);
+        resetValueButton.addEventListener('click', resetValue);
+
+        async function startRecording() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                const audioSource = audioContext.createMediaStreamSource(audioStream);
+                audioMeter = createAudioMeter(audioContext);
+                audioSource.connect(audioMeter);
+
+                isRecording = true;
+                startRecordingButton.disabled = true;
+                stopRecordingButton.disabled = false;
+
+                updateAudioMeter();
+                // 画像1を表示
+                audioMonitor.style.display = 'none';
+                image1.style.display = 'block';
+                image2.style.display = 'none';
+                image3.style.display = 'none';
+                
+            } catch (error) {
+                console.error('録音を開始できませんでした: ', error);
+            }
+        }
+
+        function stopRecording() {
+            if (isRecording) {
+                isRecording = false;
+                startRecordingButton.disabled = false;
+                stopRecordingButton.disabled = true;
+                audioContext.close();
+                image2.style.display = 'block';
+                image1.style.display = 'none';
+                image3.style.display = 'none';
+                setTimeout(() => {
+                audioMonitor.textContent = recordedValue.toFixed(2);// 録音停止時に値を表示
+                monitorValue.style.display ='block';
+                audioMonitor.style.display = 'block';
+            },700);
+            setTimeout(() => {
+                image2.style.display = 'none';
+            },1500);
+            }
+        }
+
+        function resetValue() {
+            recordedValue = 0;
+            location.reload();
+            audioMonitor.textContent = recordedValue.toFixed(2);
+            // 画像を非表示
+            image1.style.display = 'none';
+            audioMonitor.style.display = 'none';
+            monitorValue.style.display ='none';
+            image2.style.display = 'none';
+            image3.style.display = 'block';
+        }
+
+
+
+
+
+        function createAudioMeter(audioContext, clipLevel, averaging, clipLag) {
+            const processor = audioContext.createScriptProcessor(256);
+            processor.onaudioprocess = onAudioProcess;
+
+            processor.clipping = false;
+            processor.lastClip = 0;
+            processor.volume = 0;
+
+            processor.clipLevel = clipLevel || 0.98;
+            processor.averaging = averaging || 0.95;
+            processor.clipLag = clipLag || 750;
+
+            processor.connect(audioContext.destination);
+
+            processor.checkClipping = function () {
+                if (!this.clipping) return false;
+                if ((this.lastClip + this.clipLag) < window.performance.now()) {
+                    this.clipping = false;
+                }
+                return this.clipping;
+            };
+
+            processor.shutdown = function () {
+                this.disconnect();
+                this.onaudioprocess = null;
+            };
+
+            return processor;
+        }
+
+        function onAudioProcess(event) {
+            const inputBuffer = event.inputBuffer.getChannelData(0);
+            let sum = 0.0;
+
+            for (let i = 0; i < inputBuffer.length; i++) {
+                sum += inputBuffer[i] * inputBuffer[i];
+            }
+
+            const rms = Math.sqrt(sum / inputBuffer.length);
+            audioMeter.volume = Math.max(rms, audioMeter.volume * audioMeter.averaging);
+            
+            if (isRecording) {
+                recordedValue += audioMeter.volume; // 値を加算
+            }
+
+            if (audioMeter.volume > audioMeter.clipLevel) {
+                if (!audioMeter.clipping) {
+                    audioMeter.clipping = true;
+                    audioMeter.lastClip = window.performance.now();
+                }
+            } else {
+                audioMeter.clipping = false;
+            }
+        }
+
+        function updateAudioMeter() {
+            if (isRecording) {
+                requestAnimationFrame(updateAudioMeter);
+            }
+        }
+    </script>
+</body>
+</html>
